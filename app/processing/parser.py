@@ -1,5 +1,6 @@
 import logging
 import re
+import os
 import datetime
 import pytesseract
 
@@ -23,11 +24,14 @@ class ReceiptProcessor:
         self.file_path = file_path
         self.image = Image.open(file_path)
         self.full_receipt = str(pytesseract.image_to_string(self.image, lang='deu'))
+        os.remove(file_path)
+        #logger.info(f"Extracted text from the receipt: {self.full_receipt}")
         self.lines = self.full_receipt.splitlines()
         self.purchase_date = self.extract_date()
         self.items = self.extract_items()
         self.added_products = 0
         self.new_products = []
+        
 
     def extract_date(self) -> datetime.datetime:
         date_pattern = re.compile(r'\d{4}-\d{2}-\d{2}')
@@ -37,8 +41,11 @@ class ReceiptProcessor:
             if match:
                 date_of_purchase = match.group()
                 break
-
-        date = datetime.datetime.strptime(date_of_purchase, '%Y-%m-%d')
+        try:
+            date = datetime.datetime.strptime(date_of_purchase, '%Y-%m-%d')
+        except:
+            date = datetime.datetime.now()
+            
         today = datetime.datetime.now()
 
         # Check if the date is valid:
@@ -75,6 +82,7 @@ class ReceiptProcessor:
             self.move_item_to_db(item)
         logger.info(f"Added {self.added_products} products to the database.")
         logger.info(f"New products: {', '.join(self.new_products)}")
+
     
     def move_item_to_db(self, item: tuple[str, int]):
         name, quantity = item

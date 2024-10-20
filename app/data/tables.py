@@ -22,6 +22,14 @@ class ProductInformation(Base):
     name: Mapped[str] = mapped_column()
     average_shelf_life_days: Mapped[int | None] = mapped_column()
 
+class ActivePoll(Base):
+    __tablename__ = 'active_polls'
+    id: Mapped[int] = mapped_column(primary_key=True)
+    poll_id: Mapped[str] = mapped_column()
+    product_id: Mapped[str] = mapped_column(ForeignKey('product_information.id'))
+
+    product_information: Mapped[ProductInformation] = relationship('ProductInformation')
+
 class Product(Base):
     __tablename__ = 'products'
     id: Mapped[int] = mapped_column(primary_key=True)
