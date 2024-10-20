@@ -6,7 +6,8 @@ from telegram import Update
 from processing.parser import ReceiptProcessor
 from processing.expiration_reply import ExpirationProcessor
 from data.repository import get_categories, add_active_poll, get_product_information, get_active_poll, \
-    add_product_category, delete_active_poll, delete_product_categories, add_category
+    add_product_category, delete_active_poll, delete_product_categories, add_category, get_category_by_name, \
+    get_category_products, get_product_quantity
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,14 @@ async def add_category_from_user(update: Update, context: ContextTypes.DEFAULT_T
     category_name = update.message.text.split(' ')[1]
     add_category(category_name)
     await update.message.reply_text(f'Category {category_name} added.')
+
+async def get_categories_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Get all categories from the database."""
+    categories = get_categories()
+    text = 'Categories:'
+    for category in categories:
+        text += f'\n{category.name}'
+    await update.message.reply_text(text)
 
 async def handle_receipt(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle the receipt sent by the user."""
@@ -101,3 +110,30 @@ async def handle_category_poll(update: Update, context: ContextTypes.DEFAULT_TYP
         add_product_category(product_id, category.id)
 
     delete_active_poll(poll_id)
+
+class CategoryProductGetter:
+
+    def __init__(self, category: str):
+        self.category_name = category
+        self.category = get_category_by_name(category)
+        if self.category is None:
+            self.products = []
+            return
+
+    async def get_category_products(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Get all products of a category."""
+        product_informations = get_category_products(self.category.id)
+        self.products = [product for product in product_informations if product is not None]
+
+        if len(self.products) == 0:
+            await update.message.reply_text(f'No products in category {self.category_name}.')
+        else:
+            text = f'Products in category {self.category_name}:'
+            for product in self.products:
+                quantity = get_product_quantity(product.id)
+                text += f'\n{product.name} - {quantity} items'
+            
+            await update.message.reply_text(text)
+
+
+    

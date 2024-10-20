@@ -2,6 +2,9 @@ FROM python:3.10.14-slim
 
 WORKDIR /app
 
+# Install PostgreSQL client utilities
+RUN apt-get update && apt-get install -y postgresql-client
+
 # Update and install tesseract along with German language support
 RUN apt-get update \
   && apt-get -y install tesseract-ocr \

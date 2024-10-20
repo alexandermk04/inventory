@@ -13,6 +13,10 @@ def add_product(product_id: int, purchase_date: datetime.datetime, expiration_da
     session.commit()
     return new_product.id
 
+def get_product_quantity(product_id: int):
+    """Get the quantity of a product in the inventory."""
+    return session.query(Product).filter_by(product_information_id=product_id).count()
+
 def add_product_information(name: str, average_shelf_life_days: int = None):
     """Add a new product information to the database."""
     new_product_information = ProductInformation(name=name,
@@ -37,6 +41,11 @@ def get_product_information(name: str) -> ProductInformation | None:
     res = session.query(ProductInformation).filter_by(name=name).first()
     return res
 
+def get_product_information_by_id(product_id: int) -> ProductInformation | None:
+    """Get the product information for a given ID."""
+    res = session.query(ProductInformation).filter_by(id=product_id).first()
+    return res
+
 def update_shelf_life(product_id: int, average_shelf_life_days: int):
     """Update the shelf life of a product."""
     # Update in the product information
@@ -55,9 +64,21 @@ def add_category(name: str):
     session.add(new_category)
     session.commit()
 
+def get_category_by_name(name: str) -> Category | None:
+    """Get a category by its name."""
+    res = session.query(Category).filter_by(name=name).first()
+    return res
+
 def get_categories():
     """Get all categories from the database."""
     return session.query(Category).all()
+
+def get_category_products(category_id: int):
+    """Get all products of a category."""
+    res = session.query(CategoryProductAssociation).filter_by(category_id=category_id).all()
+    product_informations = [get_product_information_by_id(association.product_information_id) for association in res]
+
+    return product_informations
 
 def add_active_poll(poll_id: str, product: ProductInformation):
     """Add a new active poll to the database."""
